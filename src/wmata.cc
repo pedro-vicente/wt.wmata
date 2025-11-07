@@ -309,6 +309,93 @@ namespace Wt
         << "  }\n"
         << "});\n";
 
+      /////////////////////////////////////////////////////////////////////////////////////////////////////
+      // add metro stations as circles
+      /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+      if (!stations.empty())
+      {
+        js << "\nvar station_features = [\n";
+
+        for (size_t idx = 0; idx < stations.size(); ++idx)
+        {
+          const Station& station = stations[idx];
+
+          std::string color = "#E51636";
+          auto it = line_colors.find(station.lineCode);
+          if (it != line_colors.end())
+          {
+            color = it->second;
+          }
+
+          js << "  {\n"
+            << "    'type': 'Feature',\n"
+            << "    'geometry': {\n"
+            << "      'type': 'Point',\n"
+            << "      'coordinates': [" << station.lon << ", " << station.lat << "]\n"
+            << "    },\n"
+            << "    'properties': {\n"
+            << "      'name': '" << station.name << "',\n"
+            << "      'code': '" << station.code << "',\n"
+            << "      'line': '" << station.lineCode << "',\n"
+            << "      'color': '" << color << "',\n"
+            << "      'address': '" << station.address << "'\n"
+            << "    }\n"
+            << "  }";
+
+          if (idx < stations.size() - 1)
+          {
+            js << ",";
+          }
+          js << "\n";
+        }
+
+        js << "];\n\n"
+
+          << "map.addSource('stations', {\n"
+          << "  'type': 'geojson',\n"
+          << "  'data': {\n"
+          << "    'type': 'FeatureCollection',\n"
+          << "    'features': station_features\n"
+          << "  }\n"
+          << "});\n\n"
+
+          << "map.addLayer({\n"
+          << "  'id': 'station-circles',\n"
+          << "  'type': 'circle',\n"
+          << "  'source': 'stations',\n"
+          << "  'paint': {\n"
+          << "    'circle-radius': 8,\n"
+          << "    'circle-color': ['get', 'color'],\n"
+          << "    'circle-stroke-width': 2,\n"
+          << "    'circle-stroke-color': '#ffffff'\n"
+          << "  }\n"
+          << "});\n\n"
+
+          << "var popup = new maplibregl.Popup({\n"
+          << "  closeButton: false,\n"
+          << "  closeOnClick: false\n"
+          << "});\n\n"
+
+          << "map.on('mouseenter', 'station-circles', function(e) {\n"
+          << "  map.getCanvas().style.cursor = 'pointer';\n"
+          << "  var coordinates = e.features[0].geometry.coordinates.slice();\n"
+          << "  var station_name = e.features[0].properties.name;\n"
+          << "  var station_line = e.features[0].properties.line;\n"
+          << "  var station_address = e.features[0].properties.address;\n"
+          << "  var html = '<strong>' + station_name + '</strong><br>' + station_line + ' Line<br>' + station_address;\n"
+          << "  while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {\n"
+          << "    coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;\n"
+          << "  }\n"
+          << "  popup.setLngLat(coordinates).setHTML(html).addTo(map);\n"
+          << "});\n\n"
+
+          << "map.on('mouseleave', 'station-circles', function() {\n"
+          << "  map.getCanvas().style.cursor = '';\n"
+          << "  popup.remove();\n"
+          << "});\n";
+      }
+
 #ifdef _WIN32
       OutputDebugStringA(js.str().c_str());
 #endif
@@ -335,6 +422,7 @@ public:
 
 private:
   Wt::WMapLibre* map;
+  Wt::WContainerWidget* map_container;
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -344,19 +432,27 @@ private:
 ApplicationMap::ApplicationMap(const Wt::WEnvironment& env)
   : WApplication(env), map(nullptr)
 {
-  map = root()->addWidget(std::make_unique<Wt::WMapLibre>());
-  map->resize(1920, 1080);
+  std::unique_ptr<Wt::WHBoxLayout> layout = std::make_unique<Wt::WHBoxLayout>();
+  layout->setContentsMargins(0, 0, 0, 0);
+  layout->setSpacing(0);
 
-  std::string stations_json = load_file("station_list.json");
-  if (!stations_json.empty())
-  {
-    parse_stations(stations_json);
-  }
+  /////////////////////////////////////////////////////////////////////////////////////////////////////
+  // map
+  // stretch factor 1 (fills remaining space).
+  /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+  std::unique_ptr<Wt::WContainerWidget> container_map = std::make_unique<Wt::WContainerWidget>();
+  map_container = container_map.get();
+  map = container_map->addWidget(std::make_unique<Wt::WMapLibre>());
+  map->resize(Wt::WLength::Auto, Wt::WLength::Auto);
 
   if (!geojson_wards.empty())
   {
     map->geojson = geojson_wards;
   }
+
+  layout->addWidget(std::move(container_map), 1);
+  root()->setLayout(std::move(layout));
 
 }
 
@@ -384,6 +480,14 @@ std::unique_ptr<Wt::WApplication> create_application(const Wt::WEnvironment& env
 int main(int argc, char* argv[])
 {
   geojson_wards = load_geojson("ward-2012.geojson");
+
+  // load and parse station data
+  std::string stations_json = load_file("station_list.json");
+  if (!stations_json.empty())
+  {
+    parse_stations(stations_json);
+  }
+
   int result = Wt::WRun(argc, argv, &create_application);
   return result;
 }
