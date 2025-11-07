@@ -182,3 +182,13 @@ endif()
 
 message(STATUS "lib_dep: " ${lib_dep})
 target_link_libraries (wmata get ${lib_dep})
+
+set(DATA_FILES
+  "resources/station_list.json"
+  "resources/ward-2012.geojson"
+)
+
+message(STATUS "Copying data files to: ${CMAKE_BINARY_DIR}")
+foreach(DATA_FILE ${DATA_FILES})
+  file(COPY "${CMAKE_SOURCE_DIR}/${DATA_FILE}" DESTINATION ${CMAKE_BINARY_DIR})
+endforeach()
