@@ -31,12 +31,17 @@ int main()
   std::string buf = ss.str();
   file.close();
 
-  std::string key = extract_value(buf, "API_KEY");
-  if (get_station_list(key) < 0)
-  {
-    return -1;
-  }
+  std::string api_key = extract_value(buf, "API_KEY");
+  const std::string lines[] = { "RD", "OR", "SV", "BL", "YL", "GR" };
+  const std::string colors[] = { "Red", "Orange", "Silver", "Blue", "Yellow", "Green" };
 
+  for (size_t idx = 0; idx < 6; ++idx)
+  {
+    int result = get_station_list(api_key, lines[idx]);
+    if (result != 0)
+    {
+    }
+  }
   return 0;
 }
 
