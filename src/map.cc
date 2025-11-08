@@ -1,0 +1,75 @@
+#include <iomanip> 
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <iostream>
+#include <chrono>
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+//to_hex
+//convert int to hex string, apply zero padding
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::string to_hex(int n)
+{
+  std::stringstream ss;
+  ss << std::hex << std::setw(2) << std::setfill('0') << n;
+  return ss.str();
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+//rgb_to_hex
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::string rgb_to_hex(int r, int g, int b)
+{
+  std::string str("#");
+  str += to_hex(r);
+  str += to_hex(g);
+  str += to_hex(b);
+  return str;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+// load_file
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::string load_file(const std::string& filename)
+{
+  std::ifstream file(filename);
+  if (!file.is_open())
+    return "";
+
+  std::stringstream buf;
+  buf << file.rdbuf();
+  return buf.str();
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+// escape_js_string
+// escape special characters for JavaScript string literals
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::string escape_js_string(const std::string& str)
+{
+  std::string s;
+  s.reserve(str.length());
+
+  for (size_t i = 0; i < str.length(); ++i)
+  {
+    char c = str[i];
+    switch (c)
+    {
+    case '\'': s += "\\'"; break;
+    case '\"': s += "\\\""; break;
+    case '\\': s += "\\\\"; break;
+    case '\n': s += "\\n"; break;
+    case '\r': s += "\\r"; break;
+    case '\t': s += "\\t"; break;
+    default: s += c; break;
+    }
+  }
+
+  return s;
+}
+

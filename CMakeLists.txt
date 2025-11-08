@@ -84,7 +84,6 @@ set(src ${src} src/ssl_read.hh)
 set(src ${src} src/ssl_read.cc)
 set(src ${src} src/get.hh)
 set(src ${src} src/get.cc)
-set(src ${src} src/get.cc)
 
 #//////////////////////////
 # create static library from common source files
@@ -100,7 +99,7 @@ target_link_libraries(get ${lib_dep})
 add_executable(http_client src/http_client.cc)
 target_link_libraries (http_client get ${lib_dep})
 
-add_executable(parser src/parse.cc src/map.cc src/map.hh)
+add_executable(parser src/parse.cc)
 
 #//////////////////////////
 # copy config file to build folder
@@ -115,7 +114,11 @@ file(COPY "${CMAKE_SOURCE_DIR}/config.json" DESTINATION ${CMAKE_BINARY_DIR})
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/ext/wt-4.12.0/src")
 
-add_executable(wmata src/wmata.cc src/map.cc src/map.hh)
+add_executable(wmata 
+src/wmata.hh 
+src/wmata.cc 
+src/map.cc 
+src/map.hh)
 
 if (MSVC)
   set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT wmata)
