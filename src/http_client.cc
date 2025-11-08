@@ -1,11 +1,6 @@
 #include <iostream>
-#include <ctime>
 #include <sstream>
 #include <fstream>
-#include "asio.hpp"
-#include "asio/ssl.hpp"
-#include <openssl/ssl.h>
-#include "ssl_read.hh"
 #include "get.hh"
 
 std::string extract_value(const std::string& content, const std::string& key);
@@ -34,7 +29,6 @@ int main()
   std::string api_key = extract_value(buf, "API_KEY");
   const std::string lines[] = { "RD", "OR", "SV", "BL", "YL", "GR" };
   const std::string colors[] = { "Red", "Orange", "Silver", "Blue", "Yellow", "Green" };
-
   for (size_t idx = 0; idx < 6; ++idx)
   {
     int result = get_station_list(api_key, lines[idx]);
@@ -42,6 +36,7 @@ int main()
     {
     }
   }
+  int result = get_gtfs_rail(api_key);
   return 0;
 }
 

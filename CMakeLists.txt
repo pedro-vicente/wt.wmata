@@ -193,14 +193,13 @@ set(DATA_FILES
   "resources/stations_RD.json"
   "resources/stations_SV.json"
   "resources/stations_YL.json"
-  "resources/line_BL.json"
-  "resources/line_GR.json"
-  "resources/line_OR.json"
-  "resources/line_RD.json"
-  "resources/line_SV.json"
-  "resources/line_YL.json"
+  "resources/line_BL.geojson"
+  "resources/line_GR.geojson"
+  "resources/line_OR.geojson"
+  "resources/line_RD.geojson"
+  "resources/line_SV.geojson"
+  "resources/line_YL.geojson"
   "resources/ward-2012.geojson"
-  "resources/rail_shapes.geojson"
 )
 
 message(STATUS "Copying data files to: ${CMAKE_BINARY_DIR}/data")
