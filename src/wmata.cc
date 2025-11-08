@@ -17,52 +17,7 @@
 #include <fstream>
 #include <iostream>
 #include <chrono>
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-// load_geojson
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-
-std::string load_geojson(const std::string& name)
-{
-  std::ifstream file(name);
-  if (!file.is_open())
-  {
-    return "";
-  }
-  std::string str;
-  std::string line;
-  while (std::getline(file, line))
-  {
-    str += line;
-  }
-  file.close();
-  return str;
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-//to_hex
-//convert int to hex string, apply zero padding
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-
-std::string to_hex(int n)
-{
-  std::stringstream ss;
-  ss << std::hex << std::setw(2) << std::setfill('0') << n;
-  return ss.str();
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-//rgb_to_hex
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-
-std::string rgb_to_hex(int r, int g, int b)
-{
-  std::string str("#");
-  str += to_hex(r);
-  str += to_hex(g);
-  str += to_hex(b);
-  return str;
-}
+#include "map.hh"
 
 std::vector<std::string> ward_color =
 { rgb_to_hex(128, 128, 0), //olive
@@ -89,6 +44,7 @@ namespace Wt
     ~WMapLibre();
 
     std::string geojson;
+    std::string red_line_geojson;
 
   protected:
     Impl* impl;
@@ -120,6 +76,7 @@ struct Station
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::string geojson_wards;
+std::string geojson_red_line;
 std::vector<Station> stations;
 
 std::map<std::string, std::string> line_colors =
@@ -133,49 +90,6 @@ std::map<std::string, std::string> line_colors =
 };
 
 const std::vector<std::string> line_codes = { "RD", "OR", "SV", "BL", "YL", "GR" };
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-// load_file
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-
-std::string load_file(const std::string& filename)
-{
-  std::ifstream file(filename);
-  if (!file.is_open())
-    return "";
-
-  std::stringstream buffer;
-  buffer << file.rdbuf();
-  return buffer.str();
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-// escape_js_string
-// escape special characters for JavaScript string literals
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-
-std::string escape_js_string(const std::string& str)
-{
-  std::string s;
-  s.reserve(str.length());
-
-  for (size_t i = 0; i < str.length(); ++i)
-  {
-    char c = str[i];
-    switch (c)
-    {
-    case '\'': s += "\\'"; break;
-    case '\"': s += "\\\""; break;
-    case '\\': s += "\\\\"; break;
-    case '\n': s += "\\n"; break;
-    case '\r': s += "\\r"; break;
-    case '\t': s += "\\t"; break;
-    default: s += c; break;
-    }
-  }
-
-  return s;
-}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 // parse_stations
@@ -228,6 +142,110 @@ void parse_stations(const std::string& buf, bool clear = false)
   {
     std::cerr << e.what() << std::endl;
   }
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+// ApplicationMap
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+class ApplicationMap : public Wt::WApplication
+{
+public:
+  ApplicationMap(const Wt::WEnvironment& env);
+  virtual ~ApplicationMap();
+
+private:
+  Wt::WMapLibre* map;
+  Wt::WContainerWidget* map_container;
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+// create_application
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::unique_ptr<Wt::WApplication> create_application(const Wt::WEnvironment& env)
+{
+  return std::make_unique<ApplicationMap>(env);
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+// main
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+int main(int argc, char* argv[])
+{
+  geojson_wards = load_file("data/ward-2012.geojson");
+  if (!geojson_wards.empty())
+  {
+  }
+
+  geojson_red_line = load_file("data/line_RD.geojson");
+  if (!geojson_red_line.empty())
+  {
+  }
+
+  bool first = true;
+  for (size_t idx = 0; idx < line_codes.size(); ++idx)
+  {
+    const std::string& line_code = line_codes[idx];
+    std::string filename = "data/stations_" + line_code + ".json";
+    std::string stations_json = load_file(filename);
+    if (!stations_json.empty())
+    {
+      parse_stations(stations_json, first);
+      first = false;
+    }
+    else
+    {
+    }
+  }
+
+  int result = Wt::WRun(argc, argv, &create_application);
+  return result;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+// ApplicationMap
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+ApplicationMap::ApplicationMap(const Wt::WEnvironment& env)
+  : WApplication(env), map(nullptr)
+{
+  std::unique_ptr<Wt::WHBoxLayout> layout = std::make_unique<Wt::WHBoxLayout>();
+  layout->setContentsMargins(0, 0, 0, 0);
+  layout->setSpacing(0);
+
+  /////////////////////////////////////////////////////////////////////////////////////////////////////
+  // map
+  // stretch factor 1 (fills remaining space).
+  /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+  std::unique_ptr<Wt::WContainerWidget> container_map = std::make_unique<Wt::WContainerWidget>();
+  map_container = container_map.get();
+  map = container_map->addWidget(std::make_unique<Wt::WMapLibre>());
+  map->resize(Wt::WLength::Auto, Wt::WLength::Auto);
+
+  if (!geojson_wards.empty())
+  {
+    map->geojson = geojson_wards;
+  }
+
+  if (!geojson_red_line.empty())
+  {
+    map->red_line_geojson = geojson_red_line;
+  }
+
+  layout->addWidget(std::move(container_map), 1);
+  root()->setLayout(std::move(layout));
+
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+// ~ApplicationMap
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+ApplicationMap::~ApplicationMap()
+{
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -422,6 +440,33 @@ namespace Wt
           << "});\n";
       }
 
+      /////////////////////////////////////////////////////////////////////////////////////////////////////
+      // add red line
+      /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+      if (!this->red_line_geojson.empty())
+      {
+        js << "\n// Add Red Line\n";
+        js << "map.addSource('red-line', {\n"
+          << "  'type': 'geojson',\n"
+          << "  'data': " << this->red_line_geojson << "\n"
+          << "});\n\n"
+          << "map.addLayer({\n"
+          << "  'id': 'red-line-layer',\n"
+          << "  'type': 'line',\n"
+          << "  'source': 'red-line',\n"
+          << "  'layout': {\n"
+          << "    'line-join': 'round',\n"
+          << "    'line-cap': 'round'\n"
+          << "  },\n"
+          << "  'paint': {\n"
+          << "    'line-color': '#E51636',\n"
+          << "    'line-width': 4,\n"
+          << "    'line-opacity': 0.8\n"
+          << "  }\n"
+          << "}, 'station-circles');\n\n";
+      }
+
 #ifdef _WIN32
       OutputDebugStringA(js.str().c_str());
 #endif
@@ -436,96 +481,3 @@ namespace Wt
 
 }// namespace Wt
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-// ApplicationMap
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-
-class ApplicationMap : public Wt::WApplication
-{
-public:
-  ApplicationMap(const Wt::WEnvironment& env);
-  virtual ~ApplicationMap();
-
-private:
-  Wt::WMapLibre* map;
-  Wt::WContainerWidget* map_container;
-};
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-// ApplicationMap
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-
-ApplicationMap::ApplicationMap(const Wt::WEnvironment& env)
-  : WApplication(env), map(nullptr)
-{
-  std::unique_ptr<Wt::WHBoxLayout> layout = std::make_unique<Wt::WHBoxLayout>();
-  layout->setContentsMargins(0, 0, 0, 0);
-  layout->setSpacing(0);
-
-  /////////////////////////////////////////////////////////////////////////////////////////////////////
-  // map
-  // stretch factor 1 (fills remaining space).
-  /////////////////////////////////////////////////////////////////////////////////////////////////////
-
-  std::unique_ptr<Wt::WContainerWidget> container_map = std::make_unique<Wt::WContainerWidget>();
-  map_container = container_map.get();
-  map = container_map->addWidget(std::make_unique<Wt::WMapLibre>());
-  map->resize(Wt::WLength::Auto, Wt::WLength::Auto);
-
-  if (!geojson_wards.empty())
-  {
-    map->geojson = geojson_wards;
-  }
-
-  layout->addWidget(std::move(container_map), 1);
-  root()->setLayout(std::move(layout));
-
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-// ~ApplicationMap
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-
-ApplicationMap::~ApplicationMap()
-{
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-// create_application
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-
-std::unique_ptr<Wt::WApplication> create_application(const Wt::WEnvironment& env)
-{
-  return std::make_unique<ApplicationMap>(env);
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-// main
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-
-int main(int argc, char* argv[])
-{
-  geojson_wards = load_geojson("ward-2012.geojson");
-  if (!geojson_wards.empty())
-  {
-  }
-
-  bool first = true;
-  for (size_t i = 0; i < line_codes.size(); ++i)
-  {
-    const std::string& line_code = line_codes[i];
-    std::string filename = "stations_" + line_code + ".json";
-    std::string stations_json = load_file(filename);
-    if (!stations_json.empty())
-    {
-      parse_stations(stations_json, first);
-      first = false;
-    }
-    else
-    {
-    }
-  }
-
-  int result = Wt::WRun(argc, argv, &create_application);
-  return result;
-}

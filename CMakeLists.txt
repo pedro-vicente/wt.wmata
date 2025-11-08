@@ -84,6 +84,7 @@ set(src ${src} src/ssl_read.hh)
 set(src ${src} src/ssl_read.cc)
 set(src ${src} src/get.hh)
 set(src ${src} src/get.cc)
+set(src ${src} src/get.cc)
 
 #//////////////////////////
 # create static library from common source files
@@ -99,6 +100,8 @@ target_link_libraries(get ${lib_dep})
 add_executable(http_client src/http_client.cc)
 target_link_libraries (http_client get ${lib_dep})
 
+add_executable(parser src/parse.cc src/map.cc src/map.hh)
+
 #//////////////////////////
 # copy config file to build folder
 #//////////////////////////
@@ -112,7 +115,7 @@ file(COPY "${CMAKE_SOURCE_DIR}/config.json" DESTINATION ${CMAKE_BINARY_DIR})
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/ext/wt-4.12.0/src")
 
-add_executable(wmata src/wmata.cc)
+add_executable(wmata src/wmata.cc src/map.cc src/map.hh)
 
 if (MSVC)
   set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT wmata)
@@ -184,11 +187,32 @@ message(STATUS "lib_dep: " ${lib_dep})
 target_link_libraries (wmata get ${lib_dep})
 
 set(DATA_FILES
-  "resources/station_list.json"
+  "resources/stations_BL.json"
+  "resources/stations_GR.json"
+  "resources/stations_OR.json"
+  "resources/stations_RD.json"
+  "resources/stations_SV.json"
+  "resources/stations_YL.json"
+  "resources/line_BL.json"
+  "resources/line_GR.json"
+  "resources/line_OR.json"
+  "resources/line_RD.json"
+  "resources/line_SV.json"
+  "resources/line_YL.json"
   "resources/ward-2012.geojson"
+  "resources/rail_shapes.geojson"
 )
 
-message(STATUS "Copying data files to: ${CMAKE_BINARY_DIR}")
+message(STATUS "Copying data files to: ${CMAKE_BINARY_DIR}/data")
 foreach(DATA_FILE ${DATA_FILES})
-  file(COPY "${CMAKE_SOURCE_DIR}/${DATA_FILE}" DESTINATION ${CMAKE_BINARY_DIR})
+  file(COPY "${CMAKE_SOURCE_DIR}/${DATA_FILE}" DESTINATION ${CMAKE_BINARY_DIR}/data)
 endforeach()
+
+#//////////////////////////
+# GTFS data files
+#//////////////////////////
+
+file(GLOB GTFS_FILES "${CMAKE_SOURCE_DIR}/resources/gtfs/*")
+message(STATUS "Copying GTFS files to: ${CMAKE_BINARY_DIR}/data/gtfs")
+file(COPY ${GTFS_FILES} DESTINATION ${CMAKE_BINARY_DIR}/data/gtfs)
+

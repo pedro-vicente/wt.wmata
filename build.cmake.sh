@@ -6,7 +6,6 @@ echo "Wt at: $path_wt"
 echo "Boost at: $path_boost"
 sleep 1
 
-# check if ext/asio directory exists, if not clone it
 if [ ! -d "ext/asio-1.30.2" ]; then
     echo "asio not found in ext/, cloning from GitHub..."
     mkdir -p ext
@@ -21,7 +20,6 @@ else
     echo "asio already exists in ext/"
 fi
 
-# build directory 
 mkdir -p build/wmata
 pushd build
 pushd wmata
@@ -34,9 +32,9 @@ cmake --build . --config Debug --verbose
 
 echo "open browser http://localhost:8080"
 if [[ "$OSTYPE" == "msys"* ]]; then
-./Debug/web --http-address=0.0.0.0 --http-port=8080  --docroot=.
+./Debug/wmata --http-address=0.0.0.0 --http-port=8080  --docroot=.
 else
-./web --http-address=0.0.0.0 --http-port=8080  --docroot=.
+./wmata --http-address=0.0.0.0 --http-port=8080  --docroot=.
 fi
 
 popd
