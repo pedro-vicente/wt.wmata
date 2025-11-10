@@ -1,20 +1,7 @@
-#include <Wt/WApplication.h>
-#include <Wt/WContainerWidget.h>
-#include <Wt/WCompositeWidget.h>
-#include <Wt/WHBoxLayout.h>
-#include <Wt/WBreak.h>
-#include <Wt/Json/Object.h>
-#include <Wt/Json/Parser.h>
-#include <Wt/Json/Array.h>
-#ifdef _WIN32
-#include <windows.h>
-#endif
-#include <vector>
-#include <string>
-#include <map>
-#include <sstream>
+#include <Wt/WTimer.h>
 #include <iostream>
-#include <chrono>
+#include <sstream>
+#include <fstream>
 #include "map.hh"
 #include "wmata.hh"
 
@@ -36,6 +23,7 @@ std::vector<std::string> ward_color =
 std::string geojson_wards;
 std::string geojson_red_line;
 std::vector<Station> stations;
+std::vector<Prediction> predictions;
 
 std::map<std::string, std::string> line_colors =
 {
@@ -48,59 +36,6 @@ std::map<std::string, std::string> line_colors =
 };
 
 const std::vector<std::string> line_codes = { "RD", "OR", "SV", "BL", "YL", "GR" };
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-// parse_stations
-// Parse obj JSON and add to global stations vector
-// Parameters:
-//   buf - JSON string containing obj data
-//   clear - If true, clear existing stations before adding new ones
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void parse_stations(const std::string& buf, bool clear = false)
-{
-  if (clear)
-  {
-    stations.clear();
-  }
-
-  try
-  {
-    Wt::Json::Object root;
-    Wt::Json::parse(buf, root);
-
-    if (root.contains("Stations"))
-    {
-      const Wt::Json::Array& arr = root.get("Stations");
-      size_t count = 0;
-
-      for (size_t idx = 0; idx < arr.size(); ++idx)
-      {
-        const Wt::Json::Object& obj = arr[idx];
-
-        std::string Code = obj.get("Code").orIfNull("");
-        std::string Name = obj.get("Name").orIfNull("");
-        double Lat = obj.get("Lat").orIfNull(0.0);
-        double Lon = obj.get("Lon").orIfNull(0.0);
-        std::string lineCode1 = obj.get("LineCode1").orIfNull("");
-
-        std::string Address = "";
-        if (obj.contains("Address"))
-        {
-          const Wt::Json::Object& addrObj = obj.get("Address");
-          Address = addrObj.get("Street").orIfNull("");
-        }
-
-        stations.emplace_back(Code, Name, Lat, Lon, lineCode1, Address);
-        count++;
-      }
-    }
-  }
-  catch (const std::exception& e)
-  {
-    std::cerr << e.what() << std::endl;
-  }
-}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 // create_application
@@ -180,6 +115,17 @@ ApplicationMap::ApplicationMap(const Wt::WEnvironment& env)
 
   layout->addWidget(std::move(container_map), 1);
   root()->setLayout(std::move(layout));
+
+  /////////////////////////////////////////////////////////////////////////////////////////////////////
+  // setup timer to update predictions every 2 minutes
+  /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+  update_predictions();
+
+  timer = root()->addChild(std::make_unique<Wt::WTimer>());
+  timer->setInterval(std::chrono::seconds(120));
+  timer->timeout().connect(this, &ApplicationMap::update_predictions);
+  timer->start();
 
 }
 
@@ -423,4 +369,51 @@ namespace Wt
   }
 
 }// namespace Wt
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+// extract_value
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::string extract_value(const std::string& content, const std::string& key)
+{
+  size_t pos_key = content.find("\"" + key + "\"");
+  size_t pos_colon = content.find(":", pos_key);
+  size_t first = content.find("\"", pos_colon);
+  size_t second = content.find("\"", first + 1);
+  return content.substr(first + 1, second - first - 1);
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+// updatePredictions
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void ApplicationMap::update_predictions()
+{
+  /////////////////////////////////////////////////////////////////////////////////////////////////////
+  // load API key and other configuration values from file
+  /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+  std::ifstream file("config.json");
+  if (!file.is_open())
+  {
+    return;
+  }
+
+  std::stringstream ss;
+  ss << file.rdbuf();
+  std::string buf = ss.str();
+  file.close();
+  std::string api_key = extract_value(buf, "API_KEY");
+  std::string json = fetch_predictions(api_key);
+  try
+  {
+    parse_predictions(json);
+  }
+  catch (const std::exception& e)
+  {
+    std::cerr << e.what() << std::endl;
+    return;
+  }
+
+}
 
