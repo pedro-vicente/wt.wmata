@@ -72,9 +72,6 @@ namespace Wt
     WMapLibre();
     ~WMapLibre();
 
-    std::string geojson;
-    std::string red_line_geojson;
-
   protected:
     Impl* impl;
     virtual void render(WFlags<RenderFlag> flags) override;

@@ -43,7 +43,7 @@ std::vector<std::string> ward_color =
 };
 
 std::string geojson_wards;
-std::string geojson_red_line;
+std::string geojson_red;
 std::vector<Station> stations;
 std::vector<Prediction> predictions;
 
@@ -91,8 +91,8 @@ int main(int argc, char* argv[])
   {
   }
 
-  geojson_red_line = load_file("data/line_RD.geojson");
-  if (!geojson_red_line.empty())
+  geojson_red = load_file("data/line_RD.geojson");
+  if (!geojson_red.empty())
   {
   }
 
@@ -112,6 +112,7 @@ int main(int argc, char* argv[])
     }
   }
 
+  std::cout << stations.size() << " stations loaded." << std::endl;
   int result = Wt::WRun(argc, argv, &create_application);
   return result;
 }
@@ -136,16 +137,6 @@ ApplicationMap::ApplicationMap(const Wt::WEnvironment& env)
   map_container = container_map.get();
   map = container_map->addWidget(std::make_unique<Wt::WMapLibre>());
   map->resize(Wt::WLength::Auto, Wt::WLength::Auto);
-
-  if (!geojson_wards.empty())
-  {
-    map->geojson = geojson_wards;
-  }
-
-  if (!geojson_red_line.empty())
-  {
-    map->red_line_geojson = geojson_red_line;
-  }
 
   layout->addWidget(std::move(container_map), 1);
   root()->setLayout(std::move(layout));
@@ -215,7 +206,6 @@ namespace Wt
 
   WMapLibre::~WMapLibre()
   {
-    geojson.clear();
   }
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -261,28 +251,32 @@ namespace Wt
       // add ward layer
       /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-      js << "map.addSource('wards', {\n"
-        << "  'type': 'geojson',\n"
-        << "  'data': " << geojson << "\n"
-        << "});\n"
-
-        << "map.addLayer({\n"
-        << "  'id': 'wards-fill',\n"
-        << "  'type': 'fill',\n"
-        << "  'source': 'wards',\n"
-        << "  'paint': {\n"
-        << "    'fill-color': ['get', ['to-string', ['get', 'WARD']], ['literal', {\n";
-
-      for (size_t idx = 0; idx < ward_color.size(); ++idx)
+      if (!geojson_wards.empty())
       {
-        js << "      '" << (idx + 1) << "': '" << ward_color[idx] << "'";
-        if (idx < ward_color.size() - 1) js << ",\n";
-      }
 
-      js << "\n    }]],\n"
-        << "    'fill-opacity': 0.2\n"
-        << "  }\n"
-        << "});\n";
+        js << "map.addSource('wards', {\n"
+          << "  'type': 'geojson',\n"
+          << "  'data': " << geojson_wards << "\n"
+          << "});\n"
+
+          << "map.addLayer({\n"
+          << "  'id': 'wards-fill',\n"
+          << "  'type': 'fill',\n"
+          << "  'source': 'wards',\n"
+          << "  'paint': {\n"
+          << "    'fill-color': ['get', ['to-string', ['get', 'WARD']], ['literal', {\n";
+
+        for (size_t idx = 0; idx < ward_color.size(); ++idx)
+        {
+          js << "      '" << (idx + 1) << "': '" << ward_color[idx] << "'";
+          if (idx < ward_color.size() - 1) js << ",\n";
+        }
+
+        js << "\n    }]],\n"
+          << "    'fill-opacity': 0.2\n"
+          << "  }\n"
+          << "});\n";
+      }
 
       /////////////////////////////////////////////////////////////////////////////////////////////////////
       // add metro stations as circles
@@ -375,12 +369,12 @@ namespace Wt
       // add red line
       /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-      if (!this->red_line_geojson.empty())
+      if (!geojson_red.empty())
       {
         js << "\n// Add Red Line\n";
         js << "map.addSource('red-line', {\n"
           << "  'type': 'geojson',\n"
-          << "  'data': " << this->red_line_geojson << "\n"
+          << "  'data': " << geojson_red << "\n"
           << "});\n\n"
           << "map.addLayer({\n"
           << "  'id': 'red-line-layer',\n"
