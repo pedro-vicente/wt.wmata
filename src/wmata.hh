@@ -1,21 +1,6 @@
 #include <Wt/WApplication.h>
 #include <Wt/WContainerWidget.h>
 #include <Wt/WCompositeWidget.h>
-#include <Wt/WHBoxLayout.h>
-#include <Wt/WBreak.h>
-#include <Wt/Json/Object.h>
-#include <Wt/Json/Parser.h>
-#include <Wt/Json/Array.h>
-#ifdef _WIN32
-#include <windows.h>
-#endif
-#include <vector>
-#include <string>
-#include <map>
-#include <sstream>
-#include <iostream>
-#include <chrono>
-#include <string>
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 // Station
@@ -60,12 +45,19 @@ struct Prediction
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
-// globals
+// TrainPosition
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void parse_stations(const std::string& buf, bool clear = false);
-void parse_predictions(const std::string& buf);
-std::string fetch_predictions(const std::string& api_key);
+struct TrainPosition
+{
+  double Lng;
+  double Lat;
+  std::string Destination;
+  std::string LocationName;
+  std::string Min;
+  std::string Car;
+  std::string LineColor;
+};
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 // WMapLibre
@@ -105,4 +97,3 @@ private:
   Wt::WTimer* timer;
   void update_predictions();
 };
-
