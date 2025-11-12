@@ -16,7 +16,7 @@ pushd ext
 pushd boost_1_88_0
 
 if [[ "$OSTYPE" == "msys" ]]; then
-./bootstrap.bat
+./bootstrap.bat vc143
 ./b2 --prefix=../../build/boost_1_88_0  --layout=versioned --toolset=msvc-14.3 address-model=64 architecture=x86 variant=debug threading=multi \
   link=static runtime-link=shared \
 --build-dir=../../build/boost_1_88_0 --with-atomic --with-date_time --with-filesystem --with-program_options --with-regex --with-thread --with-chrono install
