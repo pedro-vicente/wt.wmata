@@ -10,6 +10,7 @@
 #ifdef _WIN32
 #include <windows.h>
 #endif
+#include <cmath>
 #include <vector>
 #include <string>
 #include <map>
