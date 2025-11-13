@@ -120,6 +120,8 @@ int main(int argc, char* argv[])
   geojson_red = load_file("data/line_RD.geojson");
   if (!geojson_red.empty())
   {
+    parse_line_geometry(geojson_red, red_path);
+    std::cout << red_path.size() << " path points" << std::endl;
   }
 
   bool first = true;
