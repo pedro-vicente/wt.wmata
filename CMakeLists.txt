@@ -84,6 +84,8 @@ set(src ${src} src/ssl_read.hh)
 set(src ${src} src/ssl_read.cc)
 set(src ${src} src/get.hh)
 set(src ${src} src/get.cc)
+set(src ${src} src/geojson.hh)
+set(src ${src} src/geojson.cc)
 
 #//////////////////////////
 # create static library from common source files
@@ -99,7 +101,11 @@ target_link_libraries(get ${lib_dep})
 add_executable(http_client src/http_client.cc)
 target_link_libraries (http_client get ${lib_dep})
 
-add_executable(parser src/parse.cc)
+# GTFS to GeoJson converter
+add_executable(gtfs_geojson src/gtfs_geojson.cc)
+
+# parse GeoJson 
+add_executable(geojson src/parser.cc src/geojson.cc src/geojson.hh)
 
 #//////////////////////////
 # copy config file to build folder
@@ -124,6 +130,8 @@ if (MSVC)
   set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT wmata)
   set_property(TARGET wmata PROPERTY VS_DEBUGGER_COMMAND_ARGUMENTS "--http-address=0.0.0.0 --http-port=8080  --docroot=.")
   set_property(TARGET wmata PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
+  
+  set_property(TARGET geojson PROPERTY VS_DEBUGGER_COMMAND_ARGUMENTS "data/simple.geojson")
 endif()
 
 #//////////////////////////
@@ -188,6 +196,7 @@ endif()
 
 message(STATUS "lib_dep: " ${lib_dep})
 target_link_libraries (wmata get ${lib_dep})
+target_link_libraries (geojson ${lib_dep})
 
 set(DATA_FILES
   "resources/stations_BL.json"
@@ -203,6 +212,7 @@ set(DATA_FILES
   "resources/line_SV.geojson"
   "resources/line_YL.geojson"
   "resources/ward-2012.geojson"
+  "geojson/simple.geojson"
 )
 
 message(STATUS "Copying data files to: ${CMAKE_BINARY_DIR}/data")

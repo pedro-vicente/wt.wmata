@@ -1,0 +1,94 @@
+#ifndef GEO_JSON_HH
+#define GEO_JSON_HH
+
+#include <string>
+#include <vector>
+#include <Wt/Json/Object.h>
+#include <Wt/Json/Array.h>
+#include <Wt/Json/Value.h>
+#include <Wt/Json/Parser.h>
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+//coord_t
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+class coord_t
+{
+public:
+  coord_t(double x_, double y_) :
+    x(x_),
+    y(y_)
+  {
+  }
+  double x;
+  double y;
+};
+
+///////////////////////////////////////////////////////////////////////////////////////
+//polygon_t
+///////////////////////////////////////////////////////////////////////////////////////
+
+class polygon_t
+{
+public:
+  polygon_t()
+  {
+  };
+  std::vector<coord_t> coord;
+};
+
+///////////////////////////////////////////////////////////////////////////////////////
+//geometry_t
+///////////////////////////////////////////////////////////////////////////////////////
+
+class geometry_t
+{
+public:
+  geometry_t()
+  {
+  };
+  std::string type; //"Polygon", "Point", "MultiPolygon", "LineString"
+  std::vector<polygon_t> polygons;
+};
+
+///////////////////////////////////////////////////////////////////////////////////////
+//feature_t
+///////////////////////////////////////////////////////////////////////////////////////
+
+class feature_t
+{
+public:
+  feature_t()
+  {
+  };
+  std::string name;
+  std::vector<geometry_t> geometry;
+};
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+//geojson_t
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+class geojson_t
+{
+public:
+  geojson_t()
+  {
+  }
+  int convert(const char* file_name);
+
+  //storage is a list of features 
+  std::vector<feature_t> features;
+
+private:
+  int parse_root(const Wt::Json::Object& root_object);
+  int parse_features(const Wt::Json::Array& features_array);
+  int parse_feature(const Wt::Json::Object& feature_object);
+  int parse_geometry(const Wt::Json::Object& geometry_object, feature_t& feature);
+  int parse_coordinates(const Wt::Json::Array& coordinates_array, const std::string& type, feature_t& feature);
+  int dump_value(const Wt::Json::Value& value, int indent = 0);
+  void dump_string(const std::string& s);
+};
+
+#endif
