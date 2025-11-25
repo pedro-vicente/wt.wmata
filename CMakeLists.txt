@@ -4,10 +4,15 @@ project (wmata)
 message(STATUS "Source directory is " ${CMAKE_SOURCE_DIR})
 message(STATUS "Build directory is " ${CMAKE_CURRENT_BINARY_DIR})
 message(STATUS "WT_INCLUDE: " ${WT_INCLUDE})
-message(STATUS "BOOST_INCLUDE_DIR: " ${BOOST_INCLUDE_DIR})
-message(STATUS "BOOST_LIB_DIRS: " ${BOOST_LIB_DIRS})
 
-include_directories(${BOOST_INCLUDE_DIR})
+if (MSVC)
+  message(STATUS "BOOST_INCLUDE_DIR: " ${BOOST_INCLUDE_DIR})
+  message(STATUS "BOOST_LIB_DIRS: " ${BOOST_LIB_DIRS})
+endif()
+
+if (MSVC)
+  include_directories(${BOOST_INCLUDE_DIR})
+endif()
 include_directories(${WT_INCLUDE})
 add_definitions(-DBOOST_BIND_GLOBAL_PLACEHOLDERS)
 
@@ -183,11 +188,10 @@ if(APPLE)
 endif()
 
 if (LINUX)
+  find_package(Boost REQUIRED COMPONENTS filesystem thread program_options)
   set(lib_dep ${lib_dep} ${CMAKE_CURRENT_SOURCE_DIR}/install/wt/lib/libwt.so)
   set(lib_dep ${lib_dep} ${CMAKE_CURRENT_SOURCE_DIR}/install/wt/lib/libwthttp.so)
-  set(lib_dep ${lib_dep} ${BOOST_LIB_DIRS}/libboost_filesystem-gcc13-mt-x64-1_88.a)
-  set(lib_dep ${lib_dep} ${BOOST_LIB_DIRS}/libboost_thread-gcc13-mt-x64-1_88.a)
-  set(lib_dep ${lib_dep} ${BOOST_LIB_DIRS}/libboost_program_options-gcc13-mt-x64-1_88.a)
+  set(lib_dep ${lib_dep} Boost::filesystem Boost::thread Boost::program_options)
 endif()
 
 #//////////////////////////
@@ -227,4 +231,3 @@ endforeach()
 file(GLOB GTFS_FILES "${CMAKE_SOURCE_DIR}/resources/gtfs/*")
 message(STATUS "Copying GTFS files to: ${CMAKE_BINARY_DIR}/data/gtfs")
 file(COPY ${GTFS_FILES} DESTINATION ${CMAKE_BINARY_DIR}/data/gtfs)
-

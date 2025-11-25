@@ -41,12 +41,14 @@ This project requires CMake, a C++ compiler, OpenSSL, and the ASIO and Boost C++
 brew install cmake openssl 
 export OPENSSL_ROOT_DIR=$(brew --prefix openssl)
 export PKG_CONFIG_PATH=$(brew --prefix openssl)/lib/pkgconfig:$PKG_CONFIG_PATH
-```
 
+brew install boost
+```
 ### Linux (Ubuntu/Debian)
 
 ```bash
 sudo apt install build-essential cmake libssl-dev 
+sudo apt install libboost-all-dev
 ```
 
 ### Windows 

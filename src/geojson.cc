@@ -63,7 +63,7 @@ int geojson_t::parse_root(const Wt::Json::Object& root)
     const Wt::Json::Value& value = root.get("type");
     if (value.type() == Wt::Json::Type::String)
     {
-      std::string str = static_cast<Wt::WString>(value).toUTF8();
+      std::string str = static_cast<std::string>(value);
       if (str == "Feature")
       {
         //parse the root, contains only one "Feature"
@@ -145,7 +145,7 @@ int geojson_t::parse_feature(const Wt::Json::Object& obj)
         const Wt::Json::Value& name_value = properties_object.get("NAME");
         if (name_value.type() == Wt::Json::Type::String)
         {
-          feature.name = static_cast<Wt::WString>(name_value).toUTF8();
+          feature.name = static_cast<std::string>(name_value);
         }
       }
       else if (properties_object.contains("name"))
@@ -153,7 +153,7 @@ int geojson_t::parse_feature(const Wt::Json::Object& obj)
         const Wt::Json::Value& name_value = properties_object.get("name");
         if (name_value.type() == Wt::Json::Type::String)
         {
-          feature.name = static_cast<Wt::WString>(name_value).toUTF8();
+          feature.name = static_cast<std::string>(name_value);
         }
       }
     }
@@ -189,7 +189,7 @@ int geojson_t::parse_geometry(const Wt::Json::Object& geometry_object, feature_t
     const Wt::Json::Value& type_value = geometry_object.get("type");
     if (type_value.type() == Wt::Json::Type::String)
     {
-      type = static_cast<Wt::WString>(type_value).toUTF8();
+      type = static_cast<std::string>(type_value);
     }
   }
 
@@ -429,7 +429,7 @@ int geojson_t::dump_value(const Wt::Json::Value& value, int indent)
     break;
 
   case Wt::Json::Type::String:
-    dump_string(static_cast<Wt::WString>(value).toUTF8());
+    dump_string(static_cast<std::string>(value));
     break;
 
   case Wt::Json::Type::Array:
