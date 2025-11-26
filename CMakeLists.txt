@@ -123,8 +123,6 @@ file(COPY "${CMAKE_SOURCE_DIR}/config.json" DESTINATION ${CMAKE_BINARY_DIR})
 # Wt web client 
 #//////////////////////////
 
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/ext/wt-4.12.0/src")
-
 add_executable(wmata 
 src/wmata.hh 
 src/wmata.cc 
@@ -171,8 +169,8 @@ if(LINUX)
 endif()
 
 if (MSVC)
-  set(lib_dep ${lib_dep} ${CMAKE_CURRENT_SOURCE_DIR}/build/wt-4.12.0/src/Debug/wtd.lib)
-  set(lib_dep ${lib_dep} ${CMAKE_CURRENT_SOURCE_DIR}/build/wt-4.12.0/src/http/Debug/wthttpd.lib)
+  set(lib_dep ${lib_dep} ${CMAKE_CURRENT_SOURCE_DIR}/build/wt-4.12.1/src/Debug/wtd.lib)
+  set(lib_dep ${lib_dep} ${CMAKE_CURRENT_SOURCE_DIR}/build/wt-4.12.1/src/http/Debug/wthttpd.lib)
   set(lib_dep ${lib_dep} ${BOOST_LIB_DIRS}/libboost_filesystem-vc143-mt-gd-x64-1_88.lib)
   set(lib_dep ${lib_dep} ${BOOST_LIB_DIRS}/libboost_thread-vc143-mt-gd-x64-1_88.lib)
   set(lib_dep ${lib_dep} ${BOOST_LIB_DIRS}/libboost_program_options-vc143-mt-gd-x64-1_88.lib)
