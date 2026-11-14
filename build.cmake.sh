@@ -3,8 +3,8 @@ set -e
 path_wt="$(pwd)/install/wt"
 echo "Wt at: $path_wt"
 
-if [[ "$OSTYPE" == "msys"* ]]; then
-    path_boost="$(pwd)/build/boost_1_88_0"
+if [[ "$OSTYPE" == msys* || "$OSTYPE" == cygwin* ]]; then
+    path_boost="$(pwd)/build/boost_1_92_0"
     echo "Boost at: $path_boost"
 fi
 
@@ -28,10 +28,11 @@ mkdir -p build/wmata
 pushd build
 pushd wmata
 
-if [[ "$OSTYPE" == "msys"* ]]; then
+if [[ "$OSTYPE" == msys* || "$OSTYPE" == cygwin* ]]; then
     cmake ../.. --fresh \
+        -G "Visual Studio 18 2026" -A x64 \
         -DWT_INCLUDE="$path_wt/include" \
-        -DBOOST_INCLUDE_DIR="$path_boost/include/boost-1_88" \
+        -DBOOST_INCLUDE_DIR="$path_boost/include/boost-1_92" \
         -DBOOST_LIB_DIRS="$path_boost/lib"
 else
     cmake ../.. --fresh \
@@ -41,7 +42,7 @@ fi
 cmake --build . --config Debug --verbose
 
 echo "open browser http://localhost:8080"
-if [[ "$OSTYPE" == "msys"* ]]; then
+if [[ "$OSTYPE" == msys* || "$OSTYPE" == cygwin* ]]; then
     ./Debug/wmata --http-address=0.0.0.0 --http-port=8080 --docroot=.
 else
     ./wmata --http-address=0.0.0.0 --http-port=8080 --docroot=.

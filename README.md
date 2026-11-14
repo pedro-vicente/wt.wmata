@@ -10,6 +10,9 @@ Built with C++ (Wt framework) and MapLibre GL JS.
 
 [MapLibre](https://www.maplibre.org/) is a Javascript library for developing web mapping applications. 
 
+## Live demo
+
+https://pedro-vicente.net/wmata/
 
 ![image](https://github.com/user-attachments/assets/0e7cb7b1-0797-44ee-b4af-11ab5ff99c0e)
 
@@ -62,6 +65,8 @@ set OPENSSL_ROOT_DIR=C:\OpenSSL-Win64
 ```
 
 ## Building the Project
+
+Build: Visual Studio 2026, CMake ≥ 4.2 (Windows), Boost 1.92.0, Wt 4.15.0 and OpenSSL.
 
 On a bash shell (on Windows, Git bash shell), run:
 
